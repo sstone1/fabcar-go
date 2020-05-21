@@ -1,0 +1,72 @@
+---
+metadata:
+  name: fabcar
+attributes:
+  persistVolumes: 'false'
+projects:
+  - name: fabcar-go
+    source:
+      location: 'https://github.com/sstone1/fabcar-go.git'
+      type: git
+      branch: master
+    clonePath: src/fabcar-go
+components:
+  - type: chePlugin
+    reference: >-
+      https://github.com/IBM-Blockchain/blockchain-vscode-extension/releases/download/v1.0.28/ibm-blockchain-platform-che-1.0.29.yaml
+    alias: ibm-blockchain-platform
+  - endpoints:
+      - name: fablet
+        port: 8080
+        attributes:
+          protocol: http
+          public: 'false'
+          discoverable: 'true'
+          secure: 'false'
+    memoryLimit: 1024M
+    type: dockerimage
+    volumes:
+      - name: fablet
+        containerPath: /opt/fablet/data
+    alias: fablet
+    image: sstone1/fablet
+    env:
+      - value: |
+          {
+            "endorsing_organizations": [
+              {
+                "name": "Ford"
+              },
+              {
+                "name": "Volkswagen"
+              }
+            ],
+            "channels": [
+              {
+                "name": "carnet",
+                "endorsing_organizations": [
+                  "Ford",
+                  "Volkswagen"
+                ]
+              }
+            ]
+          }
+        name: FABLET_CONFIG
+  - mountSources: true
+    command:
+      - tail
+    args:
+      - '-f'
+      - /dev/null
+    memoryLimit: 1024M
+    type: dockerimage
+    alias: nodejs
+    image: 'node:lts'
+    env:
+      - value: /tmp/npm
+        name: npm_config_cache
+  - id: eclipse/che-theia/latest
+    memoryLimit: 2048M
+    type: cheEditor
+    alias: theia-editor
+apiVersion: 1.0.0
